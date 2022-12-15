@@ -1,0 +1,180 @@
+---
+title: "Relative_fecundity"
+author: "Kira Turnham"
+date: "12/16/2022"
+---
+
+```{r}
+
+library(tidyverse)
+library(ggpubr)
+library(dplyr)
+library(Rmisc)
+library(ggplot2)
+library(devtools)
+library(cutoff)
+
+
+#read in data files
+datum=read.csv("size_redo_all.csv")
+
+smallpop = read.csv("size_redo_small.csv")
+largepop = read.csv("size_redo_large.csv")
+
+#remove NA in data
+d<-na.omit(datum)
+
+#summarize data for oocyte area and diameter for each symbiont spp.
+sum.area<-summarySE(d, measurevar="area", groupvars=c("sym.spp"))
+sum.diam<-summarySE(d, measurevar="avg", groupvars=c("sym.spp"))
+
+# make a histogram of egg size distribution with Feret diameter
+oocytediamhist <- ggplot(data=datum,aes(x=avg, fill=sym.spp))+
+  geom_histogram(binwidth=5,alpha=0.7,position="identity", col=I("black"))+
+  theme_classic(base_size=12)+
+  scale_fill_manual(name="Symbiont species",values=c( "#fde48b", "darkred"),labels = c(expression(italic("C. latusorum")), (expression(italic("D. glynnii")))))+
+  labs(x=bquote('Oocyte Average Diameter'~(mu*m)),y="Count")+
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.background = element_rect(colour = "black", size=1),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 9))+
+coord_flip() 
+plot(oocytediamhist)
+
+# #density plot of egg size distribution with Feret diameter
+ oocytediamdens <- ggplot(data=datum,aes(x=avg,fill="sym.spp"))+
+   geom_density(alpha=.7)+
+   theme_classic()+
+   scale_fill_manual(name="Symbiont species",values=c("#CC6600", "#fde48b"),labels = c(expression(italic("D. glynnii")), (expression(italic("C. latusorum")))))+
+   labs(x=bquote('Average Feret diameter'~(mu*m)),y="density")+
+  # geom_vline(aes(xintercept=312.23),color="#CC6600")+
+  # geom_vline(aes(xintercept=307.59),color="#009999")
+ coord_flip() 
+ oocytediamdens
+ 
+ #
+
+
+#violin plot with box plot inside
+lv<- ggplot(largepop, aes(x=sym.spp,y=avg))+
+geom_violin()+
+   geom_boxplot(width=0.3)+
+   labs(x="Symbiont spp.",y=bquote('Average Oocyte Diameter'~(mu*m)))+
+   # geom_point(position = jitter)
+    theme_classic()+
+   theme(legend.position="none", aspect.ratio = 1.5)+
+  #scale_fill_manual(values=c( "#fde48b", "darkred"))+
+   theme(legend.position="none")+
+    coord_flip() 
+ 
+summarySE(smallpop, measurevar = "avg", groupvars=c("sym.spp"))
+#   sym.spp   N      avg        sd        se        ci
+#1 Clat 705 38.43612 10.988012 0.4138325 0.8124936
+#2   Dglynnii 917 35.81820  9.371036 0.3094589 0.6073308
+
+summarySE(largepop, measurevar = "avg", groupvars=c("sym.spp"))
+# sym.spp  N      avg       sd       se       ci
+#1 Clat 67 96.69825 8.721841 1.065543 2.127424
+#2   Dglynnii 50 91.31491 7.242044 1.024180 2.058166
+
+
+sv<- ggplot(smallpop, aes(x=sym.spp,y=avg))+
+geom_violin()+
+   geom_boxplot(width=0.3)+
+   labs(x="Symbiont spp.",y=bquote('Average Oocyte Diameter'~(mu*m)))+
+   # geom_point(position = jitter)
+    theme_classic()+
+   theme(legend.position="none", aspect.ratio = 1.5)+
+  #scale_fill_manual(values=c( "#fde48b", "darkred"))+
+   theme(legend.position="none")+
+    coord_flip() 
+ 
+
+ 
+ # #barplot oocyte size
+
+group_by(datum, sym.spp) %>%
+  summarise(
+    count = n(),
+    mean = mean(avg, na.rm = TRUE),
+    sd = sd(avg, na.rm = TRUE)
+  )
+
+#Testing normality of all oocyte size data combined 
+with(datum, shapiro.test(avg))# p < 2.2e-16
+with(datum, shapiro.test(avg[sym.spp == "Clatusorum"])) # < 2.2e-16
+with(datum, shapiro.test(avg[sym.spp == "Dglynnii"])) # < 2.2e-16
+#test normality for D.glynnii oocyte diameters from large pop
+with(largepop, shapiro.test(avg[sym.spp == "Dglynnii"]))# p = 0.5994
+# Shapiro-Wilk normality test for Clat's diams from small pop
+with(largepop, shapiro.test(area[sym.spp == "Clatusorum"])) # p = 0.09738
+
+with(smallpop, shapiro.test(avg[sym.spp == "Dglynnii"]))# p = 1.301e-13
+
+with(smallpop, shapiro.test(avg[sym.spp == "Clatusorum"])) # p = 0.003521
+
+# Non-parametric Wilcoxen test on large pop
+wilcox.test(avg ~ sym.spp, data = largepop,
+                   exact = FALSE) #p-value = 0.0002254, alternative hypothesis: true location shift is not equal to 0
+
+# Non-parametric Wilcoxen test on small pop
+wilcox.test(avg ~ sym.spp, data = smallpop,
+                   exact = FALSE)
+res.diam
+
+ttest.area<- t.test(area ~ sym.spp, data=datum, alternative = "two.sided", var.equal = TRUE)
+ttest.area
+ttest.diam<-t.test(avg ~ sym.spp, data=datum, alternative = "two.sided", var.equal = TRUE)
+ttest.diam
+```
+
+```{r}
+
+gamete_counts<-read.csv("gamete_counts.csv")
+counts<-na.omit(gamete_counts)
+
+#summarize data for oocyte area and diameter for each symbiont spp.
+sum.oocyte.count<-summarySE(counts, measurevar="oocyte_count", groupvars=c("sym.spp"))
+sum.spermary.count<-summarySE(counts, measurevar="spermary_count", groupvars=c("sym.spp"))
+
+sum_sup_oocyte<-summarySE(counts, measurevar="oocyte_count", groupvars=c("sym.spp", "position"))
+
+sum_sup_sperm<-summarySE(counts, measurevar="spermary_count", groupvars=c("sym.spp", "position"))
+
+
+egg_count <- ggplot(data=sum.oocyte.count)+
+   geom_bar(stat='identity', width=0.7)+
+  aes(x=sym.spp,y=oocyte_count, fill=sym.spp, col=I("black"))+
+   labs(x="Symbiont species",y=bquote('Average number of oocytes per polyp'~(mu*m)))+
+   theme_classic()+
+   scale_fill_manual(name="Symbiont species",values=c("#fde48b", "darkred"),
+            labels = c(expression(italic("C. latusorum")), (expression(italic("D. glynnii")))))+
+   theme(legend.position="none", aspect.ratio = 1.5)+
+  geom_errorbar(aes(ymin= oocyte_count-sd, ymax=oocyte_count+sd), width=.3,
+                 position=position_dodge(.9))
+
+sperm_count<- ggplot(data=sum.spermary.count)+
+   geom_bar(stat='identity', width=0.7)+
+  aes(x=sym.spp,y=spermary_count, fill=sym.spp, col=I("black"))+
+   labs(x="Symbiont species",y=bquote('Average number of oocytes per polyp'~(mu*m)))+
+   theme_classic()+
+   scale_fill_manual(name="Symbiont species",values=c("black", "#fde48b", "darkred"),
+            labels = c(expression(italic("C. latusorum")), (expression(italic("D. glynnii")))))+
+   theme(legend.position="none", aspect.ratio = 1.5)+
+  geom_errorbar(aes(ymin= mean(spermary_count)-sd, ymax= mean(spermary_count)+sd), width=.3,
+                 position=position_dodge(.9))
+  
+ oocytediambar
+ 
+ #normality
+ with(sum_sup_oocyte, shapiro.test(oocyte_count))# p = 0.01286
+ with(sum_sup_sperm, shapiro.test(spermary_count))# p < 0.1295
+ 
+ #test whether inferior/superior positions contain different numbers of gametes
+ wilcox.test(oocyte_count ~ position, data = sum_sup_oocyte,
+                   exact = FALSE) #0.7728
+ ttest.diam<-t.test(spermary_count ~ position, data=sum_sup_sperm, alternative = "two.sided", var.equal = TRUE) #0.3122
+ 
+```
+
