@@ -1,0 +1,161 @@
+```{r}
+#Load packages
+library(reshape2)
+library(ggplot2)
+library(vegan)
+library(Rmisc)
+library(dplyr)
+library(data.table)
+library(tidyr)
+library(tidyverse)
+library(lme4)
+library(datasets)
+library(multcompView)
+library(ggpubr)
+library(rstatix)
+library(ggforce)
+library(ggdist) 
+#library(tidyquant)
+library(tidyverse)
+library(ggpubr)
+
+c1<-read.csv("calyx_data.csv")
+
+c<-drop_na(c1)
+
+COLS=c("#8b5e3c", "#fbb040")
+names(COLS)=c("C.latusorum", "D.glynnii")
+
+
+#summarize by sym.spp
+sum.diam<-summarySE(c, measurevar="Diam", groupvars=c( "sym.spp"))
+sum.diam90<-summarySE(c, measurevar="Diam90", groupvars=c( "sym.spp"))
+sum.distance<-summarySE(c, measurevar="Distance", groupvars=c( "sym.spp"))
+
+pdf("~/Documents/histo/diam.pdf")
+sum.diam %>%
+ggplot(aes(x = sym.spp, y = Diam, fill=sym.spp))+
+  geom_bar(stat="identity")+
+  #geom_point()+
+ # scale_fill_manual(name="sym.spp", colors("jco"))+
+  #scale_color_manual(name="culture", values=COLS)+
+      theme_pubr(base_size = 20)+
+      border("black")+
+  xlab("Symbiont species")+
+  ylab("Calyx maximum diameter")+
+  geom_errorbar( aes(x=sym.spp, ymin=Diam-sd, ymax=Diam+sd), width=0.4, alpha=0.9, size=1.3)
+
+sum.diam90 %>%
+ggplot(aes(x = sym.spp, y = Diam90, fill=sym.spp))+
+  geom_boxplot()+
+ # scale_fill_manual(name="sym.spp", colors("jco"))+
+  #scale_color_manual(name="culture", values=COLS)+
+      theme_pubr(base_size = 20)+
+      border("black")+
+  xlab("Symbiont species")+
+  ylab("Calyx minimum diameter")+
+  geom_errorbar( aes(x=sym.spp, ymin=Diam90-sd, ymax=Diam90+sd), width=0.4, alpha=0.9, size=1.3)
+
+sum.distance %>%
+ggplot(aes(x = sym.spp, y = Distance, fill=sym.spp))+
+  geom_boxplot()+
+ # scale_fill_manual(name="sym.spp", colors("jco"))+
+  #scale_color_manual(name="culture", values=COLS)+
+      theme_pubr(base_size = 20)+
+      border("black")+
+  xlab("Symbiont species")+
+  ylab("Average distance to nearest calyx")+
+  geom_errorbar( aes(x=sym.spp, ymin=Distance-sd, ymax=Distance+sd), width=0.4, alpha=0.9, size=1.3)
+
+
+#make a violin plot showing avg distance btwn calyces
+
+pdf("~/Documents/histo/calyx/distance_violin.pdf")
+c %>%
+ ggplot(aes(x=sym.spp,y=Distance, fill=sym.spp))+
+geom_violin()+
+   geom_boxplot(width=0.3)+
+   labs(x="Symbiont spp.",y=bquote('Average distance to nearest calyx'))+
+   geom_point()+
+    theme_classic()+
+   theme(legend.position="none", aspect.ratio = 1.5)+
+  scale_fill_manual(values=COLS)+
+   theme(legend.position="none")+
+  theme_pubr(base_size = 20)
+
+c %>%
+ ggplot(aes(x=sym.spp,y=Distance, fill=sym.spp))+
+stat_halfeye(adjust=0.5)+
+   geom_boxplot(width=0.3)+
+   labs(x="Symbiont spp.",y=bquote('Average distance to nearest calyx'))+
+   geom_point()+
+    theme_classic()+
+   theme(legend.position="none", aspect.ratio = 1.5)+
+  scale_fill_manual(values=COLS)+
+   theme(legend.position="none")+
+  theme_pubr(base_size = 20)
+
+#make a scatterplot showing max vs min diameter w/elipses and raw data
+
+pdf("~/Documents/histo/calyx/diam_diam_scatter_elipse.pdf")
+c %>%
+ggplot(aes(x = Diam, y = Diam90, fill=sym.spp, linetype = sym.spp))+
+ geom_point(aes(fill=sym.spp, size=1, shape=sym.spp), pch=21, colour="black", size=3)+
+  scale_shape_manual(values = c( 15, 16))+
+  scale_fill_manual(name="sym.spp", values=COLS)+
+      theme_pubr(base_size = 20)+
+      border("black")+
+  xlab("Max diameter")+
+  ylab("Min diameter")+
+  stat_ellipse(geom = "polygon", aes(fill=sym.spp, alpha = 0.01))+
+  coord_fixed()
+  #geom_errorbar( aes(x=sym.spp, ymin=Distance-sd, ymax=Distance+sd), width=0.4, alpha=0.9, size=1.3)
+```
+
+
+```{r}
+#explore  data using density plot
+ggdensity(c, x = "Diam90",
+   add = "mean", rug = TRUE,
+   color = "sym.spp", fill = "sym.spp",
+   palette = c(values=COLS))
+
+#histogram
+gghistogram(c, x = "Diam",
+   add = "mean", rug = TRUE,
+color = "sym.spp", fill = "sym.spp",
+   palette = c(values=COLS))
+
+#violing plot with K comparison
+ggviolin(c, x = "sym.spp", y = "Distance", fill = "sym.spp",
+         palette = c(values=COLS),
+         add = "boxplot", add.params = list(fill = "white"))+
+  stat_compare_means(comparisons = sum.distance, label = "p.signif")+ # Add significance levels
+  stat_compare_means(label.y = 0.5)
+
+#violing plot with K comparison
+pdf("~/Documents/histo/calyx/distance_violin_stat.pdf")
+c %>%
+ggviolin( x = "sym.spp", y = "Distance", fill = "sym.spp",
+         palette = c(values=COLS),
+         add = "boxplot", add.params = list(fill = "white"))+
+  stat_compare_means(comparisons = sum.distance, label = "p.signif")+ # Add significance levels
+  stat_compare_means(label.y = 0.65)
+
+pdf("~/Documents/histo/calyx/diam_violin_stat.pdf")
+c %>%
+ggviolin( x = "sym.spp", y = "Diam", fill = "sym.spp",
+         palette = c(values=COLS),
+         add = "boxplot", add.params = list(fill = "white"))+
+  stat_compare_means(comparisons = sum.distance, label = "p.signif")+ # Add significance levels
+  stat_compare_means(label.y = 1.5)
+
+pdf("~/Documents/histo/calyx/diam90_violin_stat.pdf")
+c %>%
+ggviolin( x = "sym.spp", y = "Diam90", fill = "sym.spp",
+         palette = c(values=COLS),
+         add = "boxplot", add.params = list(fill = "white"))+
+  stat_compare_means(comparisons = sum.distance, label = "p.signif")+ # Add significance levels
+  stat_compare_means(label.y = 1.5)
+```
+
