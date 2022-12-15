@@ -4,11 +4,7 @@ author: "Kira Turnham"
 date: "12/16/2022"
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-
-rm(list = ls())
-setwd("/Users/kiraturnham/Documents/histo/")
+```{r}
 
 library(tidyverse)
 library(ggpubr)
@@ -27,7 +23,9 @@ library(MASS)
 library (splines)
 library(lmerTest)
 library(emmeans)
+
 dat=read.csv("MI.data.csv")
+
 datum<-na.omit(dat)
 
 
