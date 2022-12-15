@@ -1,0 +1,249 @@
+---
+title: "Cell sizes, densities, and total volume symbiont :  host"
+author: "Kira Turnham"
+date: '2022-12-16'
+---
+
+```{r}
+
+library(tidyverse)
+library(ggpubr)
+library(dplyr)
+library(ggplot2)
+library(grid)
+library(fBasics)
+library(tidyr)
+library(reshape2)
+library(agricolae)
+library(Rmisc)
+library(gdata)
+library(rlist)
+library("ggsci")
+library(MASS)
+library (splines)
+library(ggpubr)
+
+#read in data files
+cellsize=read.csv("lap_poc_cellsize.csv")
+celldensity=read.csv("cells_cm2.csv")
+tot_vol=read.csv("vol_conc.csv")
+
+
+#set colors per symbiont spp.
+group.colors <- c("C"= "#fde48b", "D"= "darkred")
+group.color <- c("Clatusorum"= "#fde48b", "Dglynnii"= "darkred")
+
+#cell size
+d_sub<- subset(cellsize, sym.spp=="D")
+c_sub<-subset(cellsize, sym.spp=="C")
+
+#summarize by colony and spp
+sum.dl<-summarySE(d_sub, measurevar="length", groupvars=c( "colony"))
+sum.dw<-summarySE(d_sub, measurevar="width", groupvars=c( "colony"))
+sum.cl<-summarySE(c_sub, measurevar="length", groupvars=c( "colony"))
+sum.cw<-summarySE(c_sub, measurevar="width", groupvars=c( "colony"))
+
+#merge summarized data back together
+mergedlw <- cbind(sum.dl$colony, sum.dl$length, sum.dw$width)
+mergeclw <- cbind(sum.cl$colony, sum.cl$length, sum.cw$width)
+
+merged<- rbind(mergedlw, mergeclw)
+
+p<-data_frame(merged)
+
+data_new <- type.convert(p, as.is = TRUE)
+  
+d<-data_frame(mergedlw)
+c<-data_frame(mergeclw)
+  
+#plot all measurements
+csp<-ggplot(cellsize, aes(x=width,y=length, shape=sym.spp, color=sym.spp))+
+  geom_point(alpha=0.1)+
+   scale_color_manual(values=group.colors)
+
+#Now overlay averages in bold
+
+
+#had to make csv manually of the average cell sizes
+all<-read.csv("all_sum_cell_size.csv")
+
+
+COLS=c("#8b5e3c", "#fbb040")
+names(COLS)=c("C.latusorum", "D.glynnii")
+
+sum.width<-summarySE(cellsize, measurevar="width", groupvars=c("sym.spp"))
+ # sym.spp   N    width        sd         se         ci
+#1       C 531 10.07932 0.9630256 0.04179175 0.08209780
+#2       D 421  8.76736 0.8956324 0.04365045 0.08580057
+sum.length<-summarySE(cellsize, measurevar="length", groupvars=c("sym.spp"))
+#  sym.spp   N    length        sd         se         ci
+#1       C 531 11.015745 0.9166228 0.03977804 0.07814198
+#2       D 421  9.683104 0.9058834 0.04415005 0.08678260
+sum.size<-summarySE(cellsize, measurevar="length", groupvars=c("sym.spp"))
+
+cellsize %>%
+ggviolin( x = "sym.spp", y = "width", fill = "sym.spp",
+         palette = c(values=COLS),
+         add = "boxplot", add.params = list(fill = "white"))+
+  stat_compare_means(comparisons = sum.width, label = "p.signif") + 
+  stat_compare_means(label.y = 1.5)
+
+cellsize %>%
+ggviolin( x = "sym.spp", y = "length", fill = "sym.spp",
+         palette = c(values=COLS),
+         add = "boxplot", add.params = list(fill = "white"))+
+  stat_compare_means(comparisons = sum.length, label = "p.signif") + 
+  stat_compare_means(label.y = 1.5)
+
+```
+
+
+```{r setup, include=FALSE}
+
+a<-csp + geom_point(all, mapping=aes(x=width,y=length, shape=sym.spp, color=sym.spp))+
+  geom_point(size=0.05)+
+  scale_shape_manual(values = c( 15, 0, 16, 1))+
+  scale_fill_manual(values=c("#48404d","lightsalmon"), name="Symbiont spp.",
+   labels = c(expression(italic("C. latusorum")), (expression(italic("D. glynnii")))))
+    
+    
+#cs <- id %>% 
+    #    group_by(sym.spp) %>% 
+     #   summarise(colony = mean(colony))
+
+#cell density per host tissue area
+
+sum.density<- summarySE(celldensity, measurevar="cellspercm2", groupvars=c( "sym.spp"))
+  
+#barchart density
+densitybar<-ggplot(data=sum.density, aes(x=sym.spp,y=cellspercm2, col=I("black")))+
+   geom_bar(position="dodge",stat='identity', fill=group.color)+
+   labs(x="Symbiont species",y='Cells/cm2 host tissue ', title = "Symbiont density")+
+   theme_classic()+
+   theme(legend.position="none",aspect.ratio = 2)+
+  geom_errorbar(aes(ymin=cellspercm2-sd, ymax=cellspercm2+sd), width=.2,
+                 position=position_dodge(.9))
+
+#boxplot density
+den_bx<-ggplot(data=sum.density, aes(x=sym.spp,y=cellspercm2, fill=sym.spp))+
+   geom_boxplot()+
+   labs(x="Symbiont species",y='Symbiont size normalized to cell number', title = "Symbiont volume per host tissue")+
+   theme_classic()+
+  scale_fill_manual(values=group.color)
+
+#calculate percent difference in C vs D densities
+perc_diff<-sum.density %>%
+summarise(cellspercm2 = (((last(cellspercm2) - first(cellspercm2)) /(((last(cellspercm2)+first(cellspercm2))/2))*100)))
+
+#normality test
+with(celldensity, shapiro.test(cellspercm2))#W = 0.94205, p-value = 0.5251
+with(celldensity, shapiro.test(cellspercm2[sym.spp == "Clatusorum"])) #W = 0.9557, p-value = 0.786
+with(celldensity, shapiro.test(cellspercm2[sym.spp == "Dglynnii"])) #W = 0.88203, p-value = 0.2785
+
+#T-test
+t.test(cellspercm2 ~ sym.spp, data=celldensity, alternative = "two.sided", var.equal = TRUE)
+#t = -3.497, df = 10, p-value = 0.005755
+#alternative hypothesis: true difference in means is not equal to 0
+#95 percent confidence interval:
+# -2084449.3  -461989.4
+#sample estimates:
+#mean in group C. latusorum   mean in group D. glynnii 
+#                 3095985                  4369204 
+
+### sum symbiont volume to host cm2 tissue
+sum.tot.vol<- summarySE(tot_vol, measurevar="divise", groupvars=c("sym.spp"))
+#sym.spp N    divise       sd        se       ci
+#     C 8  7714.296 2426.500  857.8974 2028.605
+#     D 8 12039.736 4733.408 1673.5126 3957.228
+
+#barplot for total volume of symbionts per host cm2 tissue  (taking into account size and density)
+  barplotvol<-ggplot(data=sum.tot.vol, aes(x=sym.spp,y=divise, fill=sym.spp))+
+   geom_bar(stat='identity', fill=group.color)+
+   labs(x="Symbiont species",y='Total symbiont size normalized to cell number', title = "Symbiont volume per host tissue")+
+   theme_classic()+
+   theme(legend.position="none",aspect.ratio = 2)+
+  scale_fill_manual(values=group.colors)+
+geom_errorbar(aes(ymin=divise-ci, ymax=divise+ci), width=.2,
+                 position=position_dodge(.9))
+  
+
+ #normality test for total symbiont volume per host area
+with(tot_vol, shapiro.test(divise))#W = 0.91796, p-value = 0.1564
+with(tot_vol, shapiro.test(divise[sym.spp == "C"])) #W = 0.84743, p-value = 0.08971
+with(tot_vol, shapiro.test(divise[sym.spp == "D"])) #W = 0.90465, p-value = 0.3179
+
+#T-test
+t.test(divise ~ sym.spp, data=tot_vol, alternative = "two.sided", var.equal = FALSE)
+
+#t = -2.3, df = 14, p-value = 0.03735
+
+################
+#cell volume calculation
+
+d_sub$volume <- ((4/3)*pi*((0.5*d_sub$length)*(0.5*d_sub$width)*(0.5*d_sub$width)))
+
+c_sub$volume <- ((4/3)*pi*((0.5*c_sub$length)*(0.5*c_sub$width)*(0.5*c_sub$width)))
+
+d_avg<- mean(d_sub$volume) 
+#D. glynnii average cell volume 425.8577 um^2
+summarySE(d_sub, measurevar("volume"))
+
+c_avg<-mean(c_sub$volume) 
+#C. latusorum average cell volume = 594.7636 um^2
+
+sum.c_vol<-summarySE(c_sub, measurevar="volume")
+#   .id   N   volume       sd       se       ci
+#1 <NA> 477 594.7636 158.7554 7.268909 14.28312
+
+sum.d_vol<-summarySE(d_sub, measurevar="volume")
+#   .id   N   volume       sd       se       ci
+#1 <NA> 475 425.8577 138.5505 6.357134 12.49165
+
+
+merged.vol<-rbind(d_sub, c_sub)
+merged.sum.vol<-rbind(sum.c_vol, sum.d_vol)
+
+
+merged.vol %>%
+ggviolin( x = "sym.spp", y = "volume", fill = "sym.spp",
+         palette = c(values=COLS),
+         add = "boxplot", add.params = list(fill = "white"))+
+  stat_compare_means(comparisons = merged.sum.vol, label = "p.signif") + 
+  stat_compare_means(label.y = 1500)
+
+
+
+
+
+vol_bx<-ggplot(data=merged.vol, aes(x=sym.spp,y=volume, fill=sym.spp))+
+   geom_boxplot()+
+   labs(x="Symbiont species",y='Symbiont size normalized to cell number', title = "Symbiont cell volume")+
+   theme_classic()+
+  scale_fill_manual(values=group.colors)
+
+#calculate percent difference in sizes 
+perc_diff_vol<-merged.sum.vol %>%
+summarise(volume = (((last(volume) - first(volume)) /(((last(volume)+first(volume))/2))*100)))
+# -33.09863
+
+# test normality
+with(merged.vol, shapiro.test(volume))#W = 0.96847, p-value = 1.678e-13
+with(merged.vol, shapiro.test(volume[sym.spp == "C"])) #W = 0.96561, p-value = 3.94e-09
+with(merged.vol, shapiro.test(volume[sym.spp == "D"])) #W = 0.94496, p-value = 2.814e-12
+
+#non normal, so need to use non-parametric test. These are independent samples, so Mann Witney U Test (i.e. wilcoxen but paired=FALSE)
+wilcox.test(merged.vol$volume~
+              merged.vol$sym.spp)
+#W = 182400, p-value < 2.2e-16
+#alternative hypothesis: true location shift is not equal to 0
+
+
+ %>%
+ggviolin( x = "sym.spp", y = "length", fill = "sym.spp",
+         palette = c(values=COLS),
+         add = "boxplot", add.params = list(fill = "white"))+
+  stat_compare_means(comparisons = sum.length, label = "p.signif") + 
+  stat_compare_means(label.y = 1.5)
+
+
+```
