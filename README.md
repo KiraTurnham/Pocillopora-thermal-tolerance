@@ -6,20 +6,18 @@ The following code was used in investigating the functional performance of <i> P
 
 (DOI will be provided when available)
 
-## Files overview
+## Files overview ##
 
-MI <- Analysis code for comparing daily, seasonal, and experimental symbiont mitotic indices 
+Symbiont_size_dens_vol<- symbiont cell densities per host area, cell sizes, and total volume of symbiont to host. 
 
-CELL_DENSITY <- Ananlysis code for comparing symbiont cell densities
+MI <- Analysis code for comparing daily, seasonal, and experimental symbiont mitotic indices
 
-CELL SIZE <- Analysis code for comparing symbiont cell sizes
+Fecundity <- Analysis code for comparing host relative fecundity (oocyte size and number, spermary number, per polyp)
 
-FECUNDITY <- Analysis code for comparing host relative fecundity (oocyte size and number, spermary number, per polyp)
+Growth <- Analysis code for comparing host calcification, buoyant weight, and linear extension
 
-GROWTH <- Analysis code for comparing host calcification, buoyant weight, and linear extension
+Calyx <- Analysis code for comparing host calyx dimensions
 
-CALYX<- Analysis code for comparing host calyx dimensions
-
-PHYSIOLOGY <- Analysis code for comparing photophysiology measured with FIRe.
+FIRe <- Analysis code for comparing photophysiology during heat experiment measured with FIRe.
 
 
