@@ -1,0 +1,258 @@
+```{r}
+#Code for fast rate repetition FIRe fluorometer during La Paz experiment
+
+rm(list = ls())
+knitr::opts_chunk$set(echo = TRUE)
+setwd("/Users/kiraturnham/Documents/histo/photophysiology/")
+library(reshape2)
+library(ggplot2)
+library(vegan)
+library(Rmisc)
+library(dplyr)
+library(data.table)
+library(tidyr)
+library(tidyverse)
+library(lme4)
+library(datasets)
+library(multcompView)
+library(ggpubr)
+library(rstatix)
+library(ggforce)
+library(tidyverse)
+#library(plyr)
+library(data.table)
+library(tidyr)
+library("emmeans")
+library(rstatix)
+library("multcomp")
+library(nlme )
+
+
+
+dat<-read.csv("LaPaz_Fire_data.csv", header = TRUE)
+drop_na(dat)
+
+COLS=c("#8b5e3c", "brown", "#fbb040", "goldenrod")
+names(COLS)=c("3", "4", "1", "2")
+
+dat$ID<- 1:nrow(dat)
+
+
+#summarize by sym.spp
+
+sum.fvfm<-summarySE(p, measurevar="Fv.Fm", groupvars=c( "sym.spp", "treatment", "days_at_32"))
+sum.sigma<-summarySE(p, measurevar="sigma", groupvars=c( "sym.spp", "treatment", "days_at_32"))
+sum.tau<-summarySE(p, measurevar="tau", groupvars=c( "sym.spp", "treatment", "days_at_32"))
+
+#
+p<-drop_na(dat)
+p$days_at_32<- as.factor(p$days_at_32)
+p$sym.spp<- as.factor(p$sym.spp)
+p$group<-as.factor(p$group)
+
+
+s<-drop_na(sum.fvfm)
+sum.fvfm$days_at_32<- as.numeric(sum.fvfm$days_at_32)
+
+sum.fvfm$sym.spp<- as.factor(sum.fvfm$sym.spp)
+sum.fvfm$group<-as.factor(sum.fvfm$group)
+```
+
+```{r}
+#lme4 to construct linear mixed model
+#treatment (control vs heated); sym spp; day are fixed effects
+#genet (frag) is a random effect
+#comparing day 1 and 7
+
+#subset days 1 and 7
+ps<-subset(p, days_at_32=="1")
+ps2<-subset(p, days_at_32=="7")
+pt<-rbind(ps, ps2)
+
+pt<-
+
+pt$days_at_32<- as.factor(pt$days_at_32)
+
+#model testing
+fvfm_lm<- lmer(Fv.Fm ~ treatment * days_at_32 * sym.spp + (1|frag_rep), data=pt)
+step(fvfm_lm, reduce.random = F)  #tests model factors by AIC
+anova(fvfm_lm)
+
+#post hoc comparisons with emmeans
+print(emmeans(fvfm_lm, list(pairwise ~ treatment|days_at_32|sym.spp)), adjust = c('mvt'))
+
+print(emmeans(fvfm_lm, list(pairwise ~ sym.spp|treatment|days_at_32)), adjust = c('mvt'))
+
+print(emmeans(fvfm_lm, list(pairwise ~ sym.spp|days_at_32|treatment)), adjust = c('mvt'))
+
+
+#testing each day Fv/Fm
+pfvfm_lm<- lmer(Fv.Fm ~ treatment * days_at_32 * sym.spp + (1|frag_rep), data=p)
+step(pfvfm_lm, reduce.random = F)  #tests model factors by AIC
+anova(pfvfm_lm)
+
+#post hoc comparisons with emmeans
+
+print(emmeans(pfvfm_lm, list(pairwise ~ sym.spp|treatment|days_at_32)), adjust = c('mvt'))
+
+print(emmeans(pfvfm_lm, list(pairwise ~ treatment|sym.spp|days_at_32)), adjust = c('mvt'))
+
+#testing each day Sigma
+psigma_lm<- lmer(sigma ~ treatment * days_at_32 * sym.spp + (1|frag_rep), data=p)
+step(psigma_lm, reduce.random = F)  #tests model factors by AIC
+anova(psigma_lm)
+
+#post hoc comparisons with emmeans
+print(emmeans(psigma_lm, list(pairwise ~ sym.spp|treatment|days_at_32)), adjust = c('mvt'))
+
+print(emmeans(psigma_lm, list(pairwise ~ treatment|sym.spp|days_at_32)), adjust = c('mvt'))
+
+#testing each day Sigma
+ptau_lm<- lmer(tau ~ treatment * days_at_32 * sym.spp + (1|frag_rep), data=p)
+step(ptau_lm, reduce.random = F)  #tests model factors by AIC
+anova(ptau_lm)
+
+#post hoc comparisons with emmeans
+print(emmeans(ptau_lm, list(pairwise ~ sym.spp|treatment|days_at_32)), adjust = c('mvt'))
+
+print(emmeans(ptau_lm, list(pairwise ~ treatment|sym.spp|days_at_32)), adjust = c('mvt'))
+
+
+lme_fvfm = lme(Fv.Fm ~ treatment*sym.spp*days_at_32, data=p, random = ~1|sym.spp)
+anova(lme_fvfm)
+
+
+summary(glht(lme_fvfm, linfct=mcp(sym.spp = "Tukey")), test = adjusted(type = "bonferroni"))
+
+glht(lme_fvfm, linfct = mcp(days_at_32= "Tukey"))
+```
+
+
+```{r}
+p %>%
+  group_by(sym.spp, treatment,days_at_32) %>%
+  get_summary_stats(Fv.Fm, type = "mean_sd")
+
+bxp <- ggboxplot(p, x = "days_at_32", y = "Fv.Fm", add = "point", color = "treatment", palette = "jco", facet.by = "sym.spp")
+bxp
+
+#test if extreme outliers
+p %>%
+  group_by(sym.spp, treatment,days_at_32) %>%
+  identify_outliers(Fv.Fm)
+#no extreme outliers
+
+#test normality
+
+# Build the linear model
+model  <- lm(Fv.Fm ~ sym.spp*days_at_32*treatment,
+             data = p)
+# Create a QQ plot of residuals
+ggqqplot(residuals(model))
+
+ggqqplot(p, "Fv.Fm", ggtheme = theme_bw()) +
+  facet_grid(sym.spp ~ days_at_32)
+
+ggqqplot(p, "Fv.Fm", ggtheme = theme_bw()) +
+  facet_grid(sym.spp + days_at_32 ~ treatment)
+
+p %>%
+  group_by(sym.spp, treatment,days_at_32) %>%
+  shapiro_test(Fv.Fm)
+#data are approx normal
+
+p %>% levene_test(Fv.Fm ~ sym.spp*days_at_32*treatment)
+#not significant
+
+res.aov <- p %>% anova_test(Fv.Fm ~ sym.spp * treatment * days_at_32)
+res.aov
+# there is a significant interaction between treatment:days_at_32, sym.spp:treatment, and idividually.
+
+#post hoc tests
+# Group the data by spp and fit  anova
+model <- lm(Fv.Fm ~ sym.spp * treatment, data = p)
+p %>%
+  group_by(sym.spp) %>%
+  anova_test(Fv.Fm ~ treatment, error = model)
+
+model2 <- lm(Fv.Fm ~ days_at_32 * treatment, data = p)
+p %>%
+  group_by(days_at_32) %>%
+  anova_test(Fv.Fm ~ treatment, error = model2)
+
+2
+p%>%
+ggplot( aes(experiment, sap_eq))+
+  geom_bar(position="dodge",stat="identity")+
+  facet_wrap("lifestyle" ,
+                      scales = "free_x", ncol=2, nrow=1)+
+  theme_pubr(base_size = 20)+
+      border("black")+
+  xlab("Treatment")+
+  ylab("Saponin equivalent (pg/cell")+
+  geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2,
+                 position=position_dodge(.9))+
+  stat_compare_means(comparisons = ccmp2461_sum, label = "p.signif")+ # Add significance levels
+  stat_compare_means(label.y = 20)
+
+# pairwise comparisons
+library(emmeans)
+pwc <- p %>% 
+  group_by(sym.spp) %>%
+  emmeans_test(Fv.Fm ~ education_level, p.adjust.method = "bonferroni") 
+pwc
+
+# Group the data 
+treatment.effect <- p %>%
+  group_by(sym.spp, days_at_32) %>%
+  anova_test(Fv.Fm ~ treatment, error = model)
+treatment.effect %>% filter(sym.spp == "C")
+
+library(agricolae)
+tukey.test2 <- HSD.test(res.aov, trt = 'sym.spp')
+
+TUKEY <- TukeyHSD(x=res.aov, 'treatment', conf.level=0.95)
+
+
+pdf("~/Documents/histo/figs/Fv.Fm.pdf")
+p %>%
+ggplot(aes(x = days_at_32, y = Fv.Fm, color=group, fill=group))+
+    facet_wrap (~ sym.spp)+
+  geom_smooth(method =lm, se=TRUE)+
+  #geom_point(aes(color="sym.spp", shape="group"))+
+  scale_fill_manual(name="group", values=COLS)+
+  scale_color_manual(name="group", values=COLS)+
+      theme_pubr(base_size = 20)+
+      border("black")+
+  xlab("Days at 32")+
+  ylab("Fv.Fm")
+
+pdf("~/Documents/histo/figs/sigma.pdf")
+p %>%
+ggplot(aes(x = days_at_32, y = sigma, color=group, fill=group))+
+    facet_wrap (~ sym.spp)+
+  geom_smooth(method =lm, se=TRUE)+
+  scale_linetype_identity(guide = "legend")+
+  #geom_point(aes(color="sym.spp", shape="group"))+
+  scale_fill_manual(name="group", values=COLS)+
+  scale_color_manual(name="group", values=COLS)+
+      theme_pubr(base_size = 20)+
+      border("black")+
+  xlab("Days at 32")+
+  ylab("Sigma")
+
+pdf("~/Documents/histo/figs/tau.pdf")
+p %>%
+ggplot(aes(x = days_at_32, y = tau, color=group, fill=group))+
+    facet_wrap (~ sym.spp)+
+  geom_smooth(method =lm, se=TRUE)+
+  #geom_point(aes(color="sym.spp", shape="group"))+
+  scale_fill_manual(name="group", values=COLS)+
+  scale_color_manual(name="group", values=COLS)+
+      theme_pubr(base_size = 20)+
+      border("black")+
+  xlab("Days at 32")+
+  ylab("tau")+
+ scale_x_continuous(breaks = scales::pretty_breaks(n = 7))
+
+```
