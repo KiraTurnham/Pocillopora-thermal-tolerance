@@ -29,13 +29,12 @@ celldensity=read.csv("cells_cm2.csv")
 tot_vol=read.csv("vol_conc.csv")
 
 
-#set colors per symbiont spp.
-group.colors <- c("C"= "#fde48b", "D"= "darkred")
-group.color <- c("Clatusorum"= "#fde48b", "Dglynnii"= "darkred")
+#assign spp. colors
+group.colors <- c("C.latusorum"= "#8b5e3c", "D.glynnii"= "#fbb040")
 
 #cell size
-d_sub<- subset(cellsize, sym.spp=="D")
-c_sub<-subset(cellsize, sym.spp=="C")
+d_sub<- subset(cellsize, sym.spp=="D.glynnii")
+c_sub<-subset(cellsize, sym.spp=="C.latusorum")
 
 #summarize by colony and spp
 sum.dl<-summarySE(d_sub, measurevar="length", groupvars=c( "colony"))
@@ -70,6 +69,7 @@ all<-read.csv("all_sum_cell_size.csv")
 
 COLS=c("#8b5e3c", "#fbb040")
 names(COLS)=c("C.latusorum", "D.glynnii")
+
 
 sum.width<-summarySE(cellsize, measurevar="width", groupvars=c("sym.spp"))
  # sym.spp   N    width        sd         se         ci
