@@ -30,9 +30,9 @@ datum<-na.omit(dat)
 
 
 
-#assign colors
-group.colors <- c("Clatusorum"= "#fde48b", "Dglynnii"= "darkred")
-group.color <- c("C"= "#fde48b", "D"= "darkred")
+#assign spp. colors
+group.colors <- c("C.latusorum"= "#8b5e3c", "D.glynnii"= "#fbb040")
+
 #subset data according to different experiments
 time<-subset(dat, expt == "overtime")
 seasonal_all<-subset(datum, peak = 930)
