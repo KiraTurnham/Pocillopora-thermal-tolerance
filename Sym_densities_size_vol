@@ -24,9 +24,9 @@ library (splines)
 library(ggpubr)
 
 #read in data files
-cellsize=read.csv("lap_poc_cellsize.csv")
-celldensity=read.csv("cells_cm2.csv")
-tot_vol=read.csv("vol_conc.csv")
+cellsize=fread("sym_size.csv")
+celldensity=fread("sym_cell_density.csv")
+tot_vol=fread("sym_vol.csv")
 
 
 #assign spp. colors
