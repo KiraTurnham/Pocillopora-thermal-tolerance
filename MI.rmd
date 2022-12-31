@@ -31,7 +31,7 @@ datum<-na.omit(dat)
 
 
 #assign spp. colors
-group.colors <- c("C.latusorum"= "#8b5e3c", "D.glynnii"= "#fbb040")
+group.colors <- c("Clatusorum"= "#8b5e3c", "Dglynnii"= "#fbb040")
 
 #subset data according to different experiments
 time<-subset(dat, expt == "overtime")
