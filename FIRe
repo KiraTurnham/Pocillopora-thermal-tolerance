@@ -1,9 +1,7 @@
 ```{r}
 #Code for fast rate repetition FIRe fluorometer during La Paz experiment
 
-rm(list = ls())
-knitr::opts_chunk$set(echo = TRUE)
-setwd("/Users/kiraturnham/Documents/histo/photophysiology/")
+
 library(reshape2)
 library(ggplot2)
 library(vegan)
@@ -29,7 +27,7 @@ library(nlme )
 
 
 
-dat<-read.csv("LaPaz_Fire_data.csv", header = TRUE)
+dat<-fread("LaPaz_Fire_data.csv", header = TRUE)
 drop_na(dat)
 
 COLS=c("#8b5e3c", "brown", "#fbb040", "goldenrod")
@@ -129,10 +127,13 @@ glht(lme_fvfm, linfct = mcp(days_at_32= "Tukey"))
 
 
 ```{r}
+
+#summary stats for days at 32C
 p %>%
   group_by(sym.spp, treatment,days_at_32) %>%
   get_summary_stats(Fv.Fm, type = "mean_sd")
 
+#boxplot visualization
 bxp <- ggboxplot(p, x = "days_at_32", y = "Fv.Fm", add = "point", color = "treatment", palette = "jco", facet.by = "sym.spp")
 bxp
 
@@ -143,7 +144,6 @@ p %>%
 #no extreme outliers
 
 #test normality
-
 # Build the linear model
 model  <- lm(Fv.Fm ~ sym.spp*days_at_32*treatment,
              data = p)
@@ -156,6 +156,7 @@ ggqqplot(p, "Fv.Fm", ggtheme = theme_bw()) +
 ggqqplot(p, "Fv.Fm", ggtheme = theme_bw()) +
   facet_grid(sym.spp + days_at_32 ~ treatment)
 
+#shapiro test for normality
 p %>%
   group_by(sym.spp, treatment,days_at_32) %>%
   shapiro_test(Fv.Fm)
@@ -214,7 +215,7 @@ tukey.test2 <- HSD.test(res.aov, trt = 'sym.spp')
 TUKEY <- TukeyHSD(x=res.aov, 'treatment', conf.level=0.95)
 
 
-pdf("~/Documents/histo/figs/Fv.Fm.pdf")
+#Fv/fm plot
 p %>%
 ggplot(aes(x = days_at_32, y = Fv.Fm, color=group, fill=group))+
     facet_wrap (~ sym.spp)+
@@ -227,7 +228,7 @@ ggplot(aes(x = days_at_32, y = Fv.Fm, color=group, fill=group))+
   xlab("Days at 32")+
   ylab("Fv.Fm")
 
-pdf("~/Documents/histo/figs/sigma.pdf")
+#sigma plot
 p %>%
 ggplot(aes(x = days_at_32, y = sigma, color=group, fill=group))+
     facet_wrap (~ sym.spp)+
@@ -241,7 +242,7 @@ ggplot(aes(x = days_at_32, y = sigma, color=group, fill=group))+
   xlab("Days at 32")+
   ylab("Sigma")
 
-pdf("~/Documents/histo/figs/tau.pdf")
+#tau plot
 p %>%
 ggplot(aes(x = days_at_32, y = tau, color=group, fill=group))+
     facet_wrap (~ sym.spp)+
