@@ -14,12 +14,12 @@ library(ggplot2)
 library(devtools)
 library(cutoff)
 
-
+#(colors have been modified in adobe illustrator)
 #read in data files
-datum=read.csv("size_redo_all.csv")
+datum=fread("oocyte_sizes_all.csv")
 
-smallpop = read.csv("size_redo_small.csv")
-largepop = read.csv("size_redo_large.csv")
+smallpop = fread("oocyte_sizes_small_pop.csv")
+largepop = fread("oocyte_sizes_large_pop.csv")
 
 #remove NA in data
 d<-na.omit(datum)
@@ -53,7 +53,7 @@ plot(oocytediamhist)
  coord_flip() 
  oocytediamdens
  
- #
+ 
 
 
 #violin plot with box plot inside
