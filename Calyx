@@ -19,7 +19,7 @@ library(ggdist)
 library(tidyverse)
 library(ggpubr)
 
-c1<-read.csv("calyx_data.csv")
+c1<-fread("calyx_data.csv")
 
 c<-drop_na(c1)
 
@@ -27,12 +27,12 @@ COLS=c("#8b5e3c", "#fbb040")
 names(COLS)=c("C.latusorum", "D.glynnii")
 
 
-#summarize by sym.spp
+###### summarize by sym.spp 
 sum.diam<-summarySE(c, measurevar="Diam", groupvars=c( "sym.spp"))
 sum.diam90<-summarySE(c, measurevar="Diam90", groupvars=c( "sym.spp"))
 sum.distance<-summarySE(c, measurevar="Distance", groupvars=c( "sym.spp"))
 
-pdf("~/Documents/histo/diam.pdf")
+
 sum.diam %>%
 ggplot(aes(x = sym.spp, y = Diam, fill=sym.spp))+
   geom_bar(stat="identity")+
@@ -70,7 +70,6 @@ ggplot(aes(x = sym.spp, y = Distance, fill=sym.spp))+
 
 #make a violin plot showing avg distance btwn calyces
 
-pdf("~/Documents/histo/calyx/distance_violin.pdf")
 c %>%
  ggplot(aes(x=sym.spp,y=Distance, fill=sym.spp))+
 geom_violin()+
@@ -97,7 +96,6 @@ stat_halfeye(adjust=0.5)+
 
 #make a scatterplot showing max vs min diameter w/elipses and raw data
 
-pdf("~/Documents/histo/calyx/diam_diam_scatter_elipse.pdf")
 c %>%
 ggplot(aes(x = Diam, y = Diam90, fill=sym.spp, linetype = sym.spp))+
  geom_point(aes(fill=sym.spp, size=1, shape=sym.spp), pch=21, colour="black", size=3)+
@@ -110,31 +108,28 @@ ggplot(aes(x = Diam, y = Diam90, fill=sym.spp, linetype = sym.spp))+
   stat_ellipse(geom = "polygon", aes(fill=sym.spp, alpha = 0.01))+
   coord_fixed()
   #geom_errorbar( aes(x=sym.spp, ymin=Distance-sd, ymax=Distance+sd), width=0.4, alpha=0.9, size=1.3)
-```
 
 
-```{r}
-#explore  data using density plot
+## explore  data using density plot
 ggdensity(c, x = "Diam90",
    add = "mean", rug = TRUE,
    color = "sym.spp", fill = "sym.spp",
    palette = c(values=COLS))
 
-#histogram
+## explore data using histogram
 gghistogram(c, x = "Diam",
    add = "mean", rug = TRUE,
 color = "sym.spp", fill = "sym.spp",
    palette = c(values=COLS))
 
-#violing plot with K comparison
+#### violing plot with K comparison
 ggviolin(c, x = "sym.spp", y = "Distance", fill = "sym.spp",
          palette = c(values=COLS),
          add = "boxplot", add.params = list(fill = "white"))+
   stat_compare_means(comparisons = sum.distance, label = "p.signif")+ # Add significance levels
   stat_compare_means(label.y = 0.5)
 
-#violing plot with K comparison
-pdf("~/Documents/histo/calyx/distance_violin_stat.pdf")
+#### violin plot with K comparison
 c %>%
 ggviolin( x = "sym.spp", y = "Distance", fill = "sym.spp",
          palette = c(values=COLS),
@@ -142,7 +137,7 @@ ggviolin( x = "sym.spp", y = "Distance", fill = "sym.spp",
   stat_compare_means(comparisons = sum.distance, label = "p.signif")+ # Add significance levels
   stat_compare_means(label.y = 0.65)
 
-pdf("~/Documents/histo/calyx/diam_violin_stat.pdf")
+
 c %>%
 ggviolin( x = "sym.spp", y = "Diam", fill = "sym.spp",
          palette = c(values=COLS),
