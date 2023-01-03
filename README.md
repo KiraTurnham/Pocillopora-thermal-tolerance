@@ -1,6 +1,6 @@
-# <i> Pocillopora</i> trade-offs
+# <i> Pocillopora</i> thermal tolerance
 
-Repository of analysis and figure-generating code for the paper "Minimal trade-offs in physiological function for corals with thermally tolerant, host-adapted symbionts" Kira E. Turnham, Matthew D. Aschaffenburg, D. Tye Pettay, David Paz Garcia, Héctor Reyes-Bonilla, Jorge Pinzón, Ellie Timmins, Robin T. Smith, Michael P. McGinley, Mark E. Warner, Todd C. LaJeunesse. 
+Repository of analysis and figure-generating code for the paper submitted for consideration: "Minimal trade-offs in physiological function for corals with thermally tolerant, host-adapted symbionts" Kira E. Turnham, Matthew D. Aschaffenburg, D. Tye Pettay, David Paz Garcia, Héctor Reyes-Bonilla, Jorge Pinzón, Ellie Timmins, Robin T. Smith, Michael P. McGinley, Mark E. Warner, Todd C. LaJeunesse. 
 
 The following code was used in investigating the functional performance of <i> Pocillopora grandis</i>  in La Paz, Mexico with symbionts <i> Durusdinium glynnii</i> or <i> Cladocopium latusorum</i>.  Details of measurements are provided in paper, and all raw data is available in Dryad at the following link: https://doi.org/10.5061/dryad.dr7sqvb2t
 
