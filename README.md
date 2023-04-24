@@ -8,6 +8,8 @@ The following code was used in investigating the functional performance of <i> P
 
 ## Files overview ##
 
+Abundance <- three independent sampling efforts to estimate the abundance of P. grandis colonies housing C. latusorum, D. glynnii, or both (biodiversity survey in 2004, transect establishment and sampling in 2006, and polar/circular plot sampling in 2009).
+
 Symbiont_size_dens_vol<- symbiont cell densities per host area, cell sizes, and total volume of symbiont to host. 
 
 MI <- Analysis code for comparing daily, seasonal, and experimental symbiont mitotic indices
