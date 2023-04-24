@@ -1,0 +1,69 @@
+```{r}
+
+#estimating abundance of either D. glynnii or C. latusorum in P. grandis in La Paz using circular plot sampling conducted in 2009, biodiversity sampling in 2004, and 6 transects in 2006.
+
+library(drc)
+library(ggplot2)
+library(magrittr)
+require(tidyverse)
+require(drc)
+require(modelr)
+require(broom)
+library(data.table)
+library(dplyr)
+library(udpipe)
+library(purrr)
+library(reshape2)
+library(stringr)
+library(cowplot)
+library(ggpubr)
+library(Rmisc)
+library(devtools)
+library(cutoff)
+
+#POLAR/CIRCULAR PLOT SAMPLING 2009
+polar<-read.csv("polar_plot_2009_transposed.csv")
+
+sum_polar<-summarySE(polar, measurevar="number_of_colonies", groupvars = c("sym.spp"))
+
+
+p<-ggbarplot(
+  polar, x = "sym.spp", y = "number_of_colonies",  legend = "none", xlab=FALSE, ylab = "No. of colonies",
+  add = c("mean_sd", "jitter"),
+  fill = "sym.spp", palette =c("D.glynnii"="#fbb040", "C.latusorum"="#8b5e3c", "C.latusorum/D.glynnii mixture"="white"))+
+  theme_classic2()
+
+p + theme_pubr()
+p + labs_pubr()
+p + theme_classic2()
+
+
+
+
+#BIODIVERSITY SAMPLING 2004
+
+survey<-read.csv("survey_data_2004.csv")
+
+sum_survey<-summarySE(survey, measurevar="No_of_colonies", groupvars = c("sym.spp"))
+
+
+sp<-ggbarplot(
+  survey, x = "sym.spp", y = "No_of_colonies",  width = 0.5, lab.size =20, legend = "none", xlab=FALSE, ylab = "No. of colonies",
+  add = c("mean_sd", "jitter"),
+  fill = "sym.spp", 
+  palette =c("D.glynnii"="#fbb040", "C.latusorum"="#8b5e3c", "C.latusorum/D.glynnii mixture"="white"))+ theme_classic2()
+
+
+#TRANSECT ESTABLISHMENT AND SAMPLING 2006
+
+transect<-read.csv("transects_2008.csv")
+
+sum_transect<-summarySE(transect, measurevar="No_of_colonies", groupvars = c("sym.spp"))
+
+
+tp<-ggbarplot(
+  transect, x = "sym.spp", y = "No_of_colonies",  width = 0.5, lab.size = 4, legend = "none", xlab=FALSE, ylab = "No. of colonies",
+  add = c("mean_sd", "jitter"),
+  fill = "sym.spp", palette =c("D.glynnii"="#fbb040", "C.latusorum"="#8b5e3c", "C.latusorum/D.glynnii mixture"="white"))+ theme_classic2()
+
+```
